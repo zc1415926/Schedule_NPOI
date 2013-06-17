@@ -1,0 +1,9 @@
+﻿<Window x:Class="Schedule_NPOI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MainWindow" Height="350" Width="525">
+    <Grid>
+        <Button x:Name="btnOpenExcel" Content="Open Excel" HorizontalAlignment="Left" Margin="39,87,0,0" VerticalAlignment="Top" Width="184" Height="54" FontSize="24" Click="btnOpenExcel_Click"/>
+
+    </Grid>
+</Window>

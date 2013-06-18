@@ -37,7 +37,7 @@ namespace Schedule_NPOI
             backgroundWorker.WorkerSupportsCancellation = true;
             backgroundWorker.DoWork += new DoWorkEventHandler(backgroundWorker1_DoWork);
             //backgroundWorker.ProgressChanged += new ProgressChangedEventHandler(backgroundWorker1_ProgressChanged);
-           // backgroundWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgroundWorker1_RunWorkerCompleted);
+            // backgroundWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgroundWorker1_RunWorkerCompleted);
 
         }
 
@@ -46,7 +46,7 @@ namespace Schedule_NPOI
             if (backgroundWorker.IsBusy != true)
             {
                 backgroundWorker.RunWorkerAsync();
-            }          
+            }
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
@@ -62,11 +62,11 @@ namespace Schedule_NPOI
 
             if (commonFileDialogResult == CommonFileDialogResult.Ok)
             {
-                
-                using (FileStream fileStream = File.OpenRead(@openFileDialog.FileName)) 
+
+                using (FileStream fileStream = File.OpenRead(@openFileDialog.FileName))
                 {
                     IWorkbook workbook;
-                    
+
 
                     try
                     {
@@ -74,24 +74,167 @@ namespace Schedule_NPOI
 
                         ISheet sheet = workbook.GetSheetAt(0);
 
-                        for (int j = 0; j <= sheet.LastRowNum; j++)
+                        App.Current.Dispatcher.Invoke(new Action(() =>
                         {
-                            IRow row = sheet.GetRow(j);
+                            txtTextBox.Text += "====================\n" +
+                                       "开始对文件 " + openFileDialog.FileName + "进行处理\n" +
+                                       "====================\n";
+                            txtTextBox.ScrollToEnd();
+                        }));
+
+                        IRow row;
+                        ICell cell;
+                        string strTeacherName = "";
+                        string gradeNum = "";
+                        string strClassList = "";
+
+                        //处理老师列和年级更的空行，跳过第一行
+                        for (int rowI = 1; rowI < sheet.LastRowNum; rowI++)
+                        {
+                            row = sheet.GetRow(rowI);
+
 
                             if (row != null)
                             {
-                                ICell cell = row.GetCell(1);
+                                //处理老师一行的空行
+                                cell = row.GetCell(1);
 
-                                if (cell == null)
+                                if (cell.ToString() != "")
                                 {
-                                    MessageBox.Show("[null]");
+                                    strTeacherName = cell.ToString();
+
+                                    App.Current.Dispatcher.Invoke(new Action(() =>
+                                    {
+                                        txtTextBox.Text += "正在对 " + strTeacherName + " 的信息进行处理\n";
+                                        txtTextBox.ScrollToEnd();
+                                    }));
                                 }
                                 else
                                 {
-                                    MessageBox.Show(cell.ToString());
+                                    cell.SetCellValue(strTeacherName);
                                 }
+
+                                //处理年级一列的空行
+                                cell = row.GetCell(2);
+
+                                if (cell.ToString() != "")
+                                {
+                                    gradeNum = cell.ToString();
+                                    gradeNum = gradeNum.Replace("小", "");
+                                    gradeNum = gradeNum.Replace("级", "");
+                                    cell.SetCellValue(gradeNum);
+                                }
+                                else
+                                {
+                                    cell.SetCellValue(gradeNum);
+                                }
+
+                                //改变任课班级一列的格式
+                                cell = row.GetCell(5);
+
+                                //第一行都有内容，不用判断是否为空
+                                strClassList = cell.ToString();
+                                strClassList = strClassList.Replace("小(", "");
+                                strClassList = strClassList.Replace(")班", "");
+
+                                cell.SetCellValue(strClassList);
                             }
                         }
+
+                        //把一位老师在一门课中的多个班级的分成一个班级一行
+                        int timesPerWeek = 0;
+                        string strTempTeacher = "";
+                        string[] classArray;
+                        int classArrayLength;
+                        string[] stringSeparators = new string[] { "、" };
+
+                        for (int rowI = 1; rowI < sheet.LastRowNum; rowI++)
+                        {
+                            row = sheet.GetRow(rowI);
+                            strClassList = row.GetCell(5).ToString();
+
+                            classArray = strClassList.Split(stringSeparators, StringSplitOptions.RemoveEmptyEntries);
+                            classArrayLength = classArray.Length;
+
+                            if (classArrayLength > 1)
+                            {
+                                //判断是否完成了一个人的信息处理
+                                if (strTempTeacher != row.GetCell(1).ToString())
+                                {
+                                    strTempTeacher = row.GetCell(1).ToString();
+                                }
+
+                                App.Current.Dispatcher.Invoke(new Action(() =>
+                                {
+                                    txtTextBox.Text += "正在处理 " + strTempTeacher + " 的任课班级信息\n";
+                                    txtTextBox.ScrollToEnd();
+                                }));
+                            }
+                        }
+
+
+
+
+
+
+
+
+                        CommonOpenFileDialog saveFileInFolderDialog = new CommonOpenFileDialog();
+                        saveFileInFolderDialog.IsFolderPicker = true;
+                        saveFileInFolderDialog.Title = "选择文件保存目录";
+
+                        App.Current.Dispatcher.Invoke(new Action(() =>
+                        {
+                            commonFileDialogResult = saveFileInFolderDialog.ShowDialog();
+                        }));
+
+
+                        // DateTime dateTime = System.DateTime.Now;
+
+                        if (commonFileDialogResult == CommonFileDialogResult.Ok)
+                        {
+                            FileStream fsSaveFile = File.Create(saveFileInFolderDialog.FileName + "教学计划" + DateTime.Now.ToString("yyyyMMddHHmmss")
+                                                                                                             + ".xls");
+                            workbook.Write(fsSaveFile);
+
+                            fsSaveFile.Close();
+                        }
+
+
+                        /* IRow row;
+                         ICell cell;
+                         StringBuilder strTempString = new StringBuilder();
+                        // string strCellString = "";
+
+                         for (int rowI = 0; rowI <= sheet.LastRowNum; rowI++)
+                         {
+                             row = sheet.GetRow(rowI);
+
+                             strTempString.Clear();
+
+                             if(row != null)
+                             {
+
+                                 for (int cellI = 0; cellI <= row.LastCellNum; cellI++)
+                                 {
+                                     //if (row != null)
+                                     //{
+                                     cell = row.GetCell(cellI);
+
+                                     if (cell == null)
+                                     {
+                                         strTempString.Append("[null]");
+                                     }
+                                     else
+                                     {
+                                         strTempString.Append(row.GetCell(cellI).ToString());
+                                     }
+                                 }
+                             }
+
+                             MessageBox.Show(strTempString.ToString());
+
+                         } */
 
                     }
                     catch (InvalidOperationException ex)
@@ -100,12 +243,12 @@ namespace Schedule_NPOI
                         {
                             MessageBox.Show("您打开的xls文件有内部错误\n错误信息为：" + ex.Message + "\n请使用Excel将此文件另存为之后再次尝试");
                         }
-                        
+
                     }
 
-                    
 
-                   // MessageBox.Show(workbook.NumberOfSheets.ToString());
+
+                    // MessageBox.Show(workbook.NumberOfSheets.ToString());
 
                 }
             }

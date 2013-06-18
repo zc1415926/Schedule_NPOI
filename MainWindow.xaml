@@ -3,7 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="MainWindow" Height="350" Width="525">
     <Grid>
-        <Button x:Name="btnOpenExcel" Content="Open Excel" HorizontalAlignment="Left" Margin="39,87,0,0" VerticalAlignment="Top" Width="184" Height="54" FontSize="24" Click="btnOpenExcel_Click"/>
+        <Button x:Name="btnOpenExcel" Content="Open Excel" HorizontalAlignment="Left" Margin="10,87,0,0" VerticalAlignment="Top" Width="184" Height="54" FontSize="24" Click="btnOpenExcel_Click"/>
+        <TextBox x:Name="txtTextBox" HorizontalAlignment="Left" Height="300" Margin="228,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="279" FontSize="16"/>
 
     </Grid>
 </Window>
